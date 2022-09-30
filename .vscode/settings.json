@@ -1,8 +1,0 @@
-{
-    "C_Cpp.default.includePath": [
-        "/home/abhinav/abhi/sem3/OS/XV-6/Project"
-    ],
-    "files.associations": {
-        "spinlock.h": "c"
-    }
-}
