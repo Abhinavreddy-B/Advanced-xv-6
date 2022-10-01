@@ -4308,7 +4308,7 @@ forkret(void)
     80001ed4:	0000f717          	auipc	a4,0xf
     80001ed8:	e0470713          	addi	a4,a4,-508 # 80010cd8 <cpus+0x8>
     80001edc:	9aba                	add	s5,s5,a4
-      if(p->state == RUNNABLE) {
+      if (p->state == RUNNABLE)
     80001ede:	498d                	li	s3,3
         p->state = RUNNING;
     80001ee0:	4b11                	li	s6,4
@@ -4317,7 +4317,7 @@ forkret(void)
     80001ee4:	0000fa17          	auipc	s4,0xf
     80001ee8:	dbca0a13          	addi	s4,s4,-580 # 80010ca0 <pid_lock>
     80001eec:	9a3e                	add	s4,s4,a5
-    for(p = proc; p < &proc[NPROC]; p++) {
+    for (p = proc; p < &proc[NPROC]; p++)
     80001eee:	00015917          	auipc	s2,0x15
     80001ef2:	de290913          	addi	s2,s2,-542 # 80016cd0 <tickslock>
   asm volatile("csrr %0, sstatus" : "=r" (x) );
@@ -4333,14 +4333,14 @@ forkret(void)
     80001f0c:	8526                	mv	a0,s1
     80001f0e:	fffff097          	auipc	ra,0xfffff
     80001f12:	d7c080e7          	jalr	-644(ra) # 80000c8a <release>
-    for(p = proc; p < &proc[NPROC]; p++) {
+    for (p = proc; p < &proc[NPROC]; p++)
     80001f16:	17048493          	addi	s1,s1,368
     80001f1a:	fd248ee3          	beq	s1,s2,80001ef6 <scheduler+0x4c>
       acquire(&p->lock);
     80001f1e:	8526                	mv	a0,s1
     80001f20:	fffff097          	auipc	ra,0xfffff
     80001f24:	cb6080e7          	jalr	-842(ra) # 80000bd6 <acquire>
-      if(p->state == RUNNABLE) {
+      if (p->state == RUNNABLE)
     80001f28:	4c9c                	lw	a5,24(s1)
     80001f2a:	ff3791e3          	bne	a5,s3,80001f0c <scheduler+0x62>
         p->state = RUNNING;

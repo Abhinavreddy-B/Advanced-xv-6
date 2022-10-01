@@ -299,7 +299,7 @@ fork(void)
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
-  // copy trace mask
+  // copy bits representing what bits to trace
   np->syscall_tracebits = p->syscall_tracebits;
 
   // Cause fork to return 0 in the child.
@@ -455,9 +455,12 @@ scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for(p = proc; p < &proc[NPROC]; p++) {
+#ifdef ROUND_ROBIN_SCHED
+    for (p = proc; p < &proc[NPROC]; p++)
+    {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
+      if (p->state == RUNNABLE)
+      {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
@@ -471,6 +474,37 @@ scheduler(void)
       }
       release(&p->lock);
     }
+#endif
+
+#ifdef FDFS_SCHED
+    struct proc *next_process = 0;
+    for (p = proc; p < &proc[NPROC]; p++)
+    {
+      acquire(&p->lock);
+      if (p->state == RUNNABLE)
+      {
+        if(next_process == 0 || p->pid < next_process->pid){
+          next_process = p;
+        }
+      }
+      release(&p->lock);
+    }
+    if (next_process != 0)
+    {
+      acquire(&next_process->lock);
+      // Switch to chosen process.  It is the process's job
+      // to release its lock and then reacquire it
+      // before jumping back to us.
+      next_process->state = RUNNING;
+      c->proc = next_process;
+      swtch(&c->context, &next_process->context);
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+      release(&next_process->lock);
+    }
+#endif
   }
 }
 
