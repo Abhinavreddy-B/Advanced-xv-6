@@ -168,7 +168,7 @@ syscall(void)
     p->trapframe->a0 = syscalls[num]();
 
     if((p->syscall_tracebits) & (1 << num)){ // is the syscall depicted by num asked to be traced.
-      printf("%d: syscall %s -> %d",p->pid,syscalls_names[num],p->trapframe->a0);
+      printf("%d: syscall %s -> %d\n",p->pid,syscalls_names[num],p->trapframe->a0);
     }
   } else {
     printf("%d %s: unknown sys call %d\n",

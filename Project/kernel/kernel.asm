@@ -6013,7 +6013,7 @@ syscall(void)
     80002b88:	4137d7bb          	sraw	a5,a5,s3
     80002b8c:	8b85                	andi	a5,a5,1
     80002b8e:	c7a1                	beqz	a5,80002bd6 <syscall+0x96>
-      printf("%d: syscall %s -> %d",p->pid,syscalls_names[num],p->trapframe->a0);
+      printf("%d: syscall %s -> %d\n",p->pid,syscalls_names[num],p->trapframe->a0);
     80002b90:	6cb8                	ld	a4,88(s1)
     80002b92:	098e                	slli	s3,s3,0x3
     80002b94:	00006797          	auipc	a5,0x6
