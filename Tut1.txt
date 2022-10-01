@@ -1,0 +1,27 @@
+usefull files:
+defs.h
+proc.c/.h - process table of OS , syscalls
+trap.c/.h - handing system traps
+allocproc - initialise process table
+scheduler:
+aquire -> so that other cpus do not process the same process
+
+Creating a new syscall:
+* add to user.h
+* .pl entr("waitx");
+kernel -> 
+* defs.h
+* add SYS_ and sys_ prefixes to everything
+* clockticks
+
+
+How to Debug:
+* make qemu-gdb
+
+Spec1:
+trace:
+
+
+Mark page tables to be copy on write
+
+page tables , traps , interruts
