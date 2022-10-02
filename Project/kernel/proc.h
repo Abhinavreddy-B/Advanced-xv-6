@@ -106,4 +106,7 @@ struct proc {
   char name[16];               // Process name (debugging)
 
   int syscall_tracebits;      // mask bits used in sys_trace
+  uint rtime;                   // How long the process ran for
+  uint ctime;                   // When was the process created 
+  uint etime;                   // When did the process exited
 };

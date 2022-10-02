@@ -145,7 +145,9 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-
+  p->rtime=0;
+  p->rtime=0;
+  p->ctime = ticks;
   return p;
 }
 
@@ -380,7 +382,7 @@ exit(int status)
 
   p->xstate = status;
   p->state = ZOMBIE;
-
+  p->etime = ticks;
   release(&wait_lock);
 
   // Jump into the scheduler, never to return.
@@ -434,6 +436,19 @@ wait(uint64 addr)
     
     // Wait for a child to exit.
     sleep(p, &wait_lock);  //DOC: wait-sleep
+  }
+}
+
+void
+update_time()
+{
+  struct proc* p;
+  for (p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if (p->state == RUNNING) {
+      p->rtime++;
+    }
+    release(&p->lock); 
   }
 }
 
@@ -714,7 +729,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    printf("%d %s %s", p->pid, state, p->name);
+    printf("%d %s %d %d %d %s", p->pid, state,p->ctime,p->rtime,p->etime, p->name);
     printf("\n");
   }
 }
