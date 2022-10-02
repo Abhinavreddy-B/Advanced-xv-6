@@ -492,6 +492,8 @@ scheduler(void)
 #endif
 
 #ifdef FDFS_SCHED
+#define NON_PRE_EMPT
+
     struct proc *next_process = 0;
     for (p = proc; p < &proc[NPROC]; p++)
     {
