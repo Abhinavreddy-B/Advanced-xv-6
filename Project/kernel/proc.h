@@ -81,6 +81,12 @@ struct trapframe {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+struct sigalarm_struct {
+  int nticks;
+  uint64 handlerfn;
+  struct trapframe *trapframe_cpy;
+};
+
 // Per-process state
 struct proc {
   struct spinlock lock;
@@ -105,8 +111,9 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
-  int syscall_tracebits;      // mask bits used in sys_trace
-  uint rtime;                   // How long the process ran for
-  uint ctime;                   // When was the process created 
-  uint etime;                   // When did the process exited
+  int syscall_tracebits;       // mask bits used in sys_trace
+  uint rtime;                  // How long the process ran for
+  uint ctime;                  // When was the process created 
+  uint etime;                  // When did the process exited
+  struct sigalarm_struct alarmdata;
 };

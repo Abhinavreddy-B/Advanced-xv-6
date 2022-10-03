@@ -146,8 +146,11 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
   p->rtime=0;
-  p->rtime=0;
+  p->etime=0;
   p->ctime = ticks;
+  p->alarmdata.nticks=0;
+  p->alarmdata.trapframe_cpy=0;
+  p->alarmdata.handlerfn=0;
   return p;
 }
 
@@ -447,8 +450,13 @@ update_time()
     acquire(&p->lock);
     if (p->state == RUNNING) {
       p->rtime++;
+      if(p->alarmdata.nticks != 0 && p->rtime % p->alarmdata.nticks == 0 && p->alarmdata.trapframe_cpy == 0){
+        p->alarmdata.trapframe_cpy = kalloc();
+        memmove(p->alarmdata.trapframe_cpy,p->trapframe,PGSIZE);
+        p->trapframe->epc = p->alarmdata.handlerfn;
+      }
     }
-    release(&p->lock); 
+    release(&p->lock);
   }
 }
 

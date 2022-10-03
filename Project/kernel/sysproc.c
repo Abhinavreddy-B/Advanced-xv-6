@@ -93,9 +93,38 @@ sys_uptime(void)
 uint64
 sys_trace(void)
 {
-  struct proc* p = myproc();
+  struct proc *p = myproc();
+  acquire(&p->lock);
   argint(0, &(p->syscall_tracebits));
+  release(&p->lock);
   if (p->syscall_tracebits < 0)
     return -1;
+  return 0;
+}
+
+uint64
+sys_sigalarm()
+{
+  struct proc *p = myproc();
+  acquire(&p->lock);
+  argint(0,&(p->alarmdata.nticks));
+  if(p->alarmdata.nticks < 0){
+    release(&p->lock);
+    return -1;
+  }
+  argaddr(1,&(p->alarmdata.handlerfn));
+  release(&p->lock);
+  // if(p->alarmdata.handlerfn )
+  return 0;
+}
+
+uint64
+sys_sigreturn()
+{
+  struct proc *p = myproc();
+  memmove(p->trapframe,p->alarmdata.trapframe_cpy,PGSIZE);
+
+  kfree(p->alarmdata.trapframe_cpy);
+  p->alarmdata.trapframe_cpy=0;
   return 0;
 }
