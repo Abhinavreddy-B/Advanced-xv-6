@@ -472,13 +472,14 @@ scheduler(void)
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
-
+    
 #ifdef ROUND_ROBIN_SCHED
     for (p = proc; p < &proc[NPROC]; p++)
     {
       acquire(&p->lock);
       if (p->state == RUNNABLE)
       {
+        // printf("%p\n",p);
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
@@ -494,37 +495,38 @@ scheduler(void)
     }
 #endif
 
-#ifdef FDFS_SCHED
+// #ifdef FCFS_SCHED
 #define NON_PRE_EMPT
 
     struct proc *next_process = 0;
     for (p = proc; p < &proc[NPROC]; p++)
     {
-      acquire(&p->lock);
       if (p->state == RUNNABLE)
       {
-        if(next_process == 0 || p->pid < next_process->pid){
+        acquire(&p->lock);
+        // printf("%p - %p - %s\n", next_process, p, p->name);
+        if(next_process == 0 || p->ctime < next_process->ctime){
           next_process = p;
         }
+        release(&p->lock);
       }
-      release(&p->lock);
     }
-    if (next_process != 0)
+    
+    p = next_process;
+    if (p != 0 && p->state == RUNNABLE)
     {
-      acquire(&next_process->lock);
-      // Switch to chosen process.  It is the process's job
-      // to release its lock and then reacquire it
-      // before jumping back to us.
-      next_process->state = RUNNING;
-      c->proc = next_process;
-      swtch(&c->context, &next_process->context);
+      acquire(&p->lock);
+      // printf("Hello - %p - %s\n", p, p->name);
+      p->state = RUNNING;
+      c->proc = p;
+      swtch(&c->context, &p->context);
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
-      release(&next_process->lock);
+      release(&p->lock);
     }
-#endif
+// #endif
   }
 }
 

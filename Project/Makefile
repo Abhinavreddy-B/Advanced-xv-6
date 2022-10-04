@@ -1,6 +1,6 @@
 K=kernel
 U=user
-schedPolicy=-DROUND_ROBIN_SCHED
+schedPolicy=-DFCFS_SCHED
 
 OBJS = \
   $K/entry.o \
@@ -135,6 +135,7 @@ UPROGS=\
 	$U/_zombie\
 	$U/_strace\
 	$U/_sigalarmtest\
+	$U/_schedtest\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
