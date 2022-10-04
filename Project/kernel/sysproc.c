@@ -106,15 +106,18 @@ uint64
 sys_sigalarm()
 {
   struct proc *p = myproc();
-  acquire(&p->lock);
-  argint(0,&(p->alarmdata.nticks));
-  if(p->alarmdata.nticks < 0){
+  acquire(&p->lock);                //aquire the lock.
+  argint(0,&(p->alarmdata.nticks)); // p->alarmdata.nticks = n 
+  if(p->alarmdata.nticks < 0){      // error handling
     release(&p->lock);
     return -1;
   }
-  argaddr(1,&(p->alarmdata.handlerfn));
+  argaddr(1,&(p->alarmdata.handlerfn));   // p->alarmdata.handlerfn = fn
+  if(p->alarmdata.handlerfn < 0){   // error handling
+    release(&p->lock);
+    return -1;
+  }
   release(&p->lock);
-  // if(p->alarmdata.handlerfn )
   return 0;
 }
 
@@ -122,9 +125,14 @@ uint64
 sys_sigreturn()
 {
   struct proc *p = myproc();
-  memmove(p->trapframe,p->alarmdata.trapframe_cpy,PGSIZE);
+  acquire(&p->lock);    // aquire lock
+  memmove(p->trapframe,p->alarmdata.trapframe_cpy,PGSIZE); // restore original state
 
-  kfree(p->alarmdata.trapframe_cpy);
+  kfree(p->alarmdata.trapframe_cpy);    // remove the copy
   p->alarmdata.trapframe_cpy=0;
-  return 0;
+  p->alarmdata.currticks=0;
+  release(&p->lock);                    // release the lock
+
+  // this return value was being stored in trapframe->a0 , so returned trapframe->a0 itself
+  return p->trapframe->a0;  
 }

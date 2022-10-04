@@ -66,7 +66,25 @@ usertrap(void)
 
     syscall();
   } else if((which_dev = devintr()) != 0){
-    // ok
+    if(which_dev == 2){
+      // enters here only if it is timer interrupt
+      acquire(&p->lock);
+      if (p->state == RUNNING)
+      {
+        p->alarmdata.currticks++;
+        // p->alarmdata.nticks != 0 -> if nticks is 0 , means sigalarm was not even used in the process.
+        // p->alarmdata.currticks % p->alarmdata.nticks  becomes 0 after every n ticks of the clock.
+        // p->alarmdata.trapframe_cpy == 0 -> checks for recurrent calls to the function fn ,
+        // if trapfrap_cpy != 0 means there fn was already called.
+        if (p->alarmdata.nticks != 0 && p->alarmdata.currticks % p->alarmdata.nticks == 0 && p->alarmdata.trapframe_cpy == 0)
+        {
+          p->alarmdata.trapframe_cpy = kalloc();
+          memmove(p->alarmdata.trapframe_cpy, p->trapframe, PGSIZE);
+          p->trapframe->epc = p->alarmdata.handlerfn;
+        }
+      }
+      release(&p->lock);
+    }
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());

@@ -450,11 +450,6 @@ update_time()
     acquire(&p->lock);
     if (p->state == RUNNING) {
       p->rtime++;
-      if(p->alarmdata.nticks != 0 && p->rtime % p->alarmdata.nticks == 0 && p->alarmdata.trapframe_cpy == 0){
-        p->alarmdata.trapframe_cpy = kalloc();
-        memmove(p->alarmdata.trapframe_cpy,p->trapframe,PGSIZE);
-        p->trapframe->epc = p->alarmdata.handlerfn;
-      }
     }
     release(&p->lock);
   }

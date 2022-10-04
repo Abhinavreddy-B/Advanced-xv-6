@@ -82,9 +82,10 @@ struct trapframe {
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 struct sigalarm_struct {
-  int nticks;
-  uint64 handlerfn;
-  struct trapframe *trapframe_cpy;
+  int currticks;      // current number of ticks
+  int nticks;         // given input n
+  uint64 handlerfn;   // pointer to given function fn
+  struct trapframe *trapframe_cpy;  // copy of that trapframe when interrupt occurs ( also used to avoid recurrent calls to fn )
 };
 
 // Per-process state
