@@ -1,7 +1,11 @@
+# General
+- Delete testing files
+
 # Spec 2 , FCFS
 * add integer in struct proc
 * turn of Interrupt
-* disabled timer interrupt if `NON_PRE_EMPT` macro is defined (Project/kernel/trap.c : line 79 )
+<!-- * disabled timer interrupt if `NON_PRE_EMPT` macro is defined (Project/kernel/trap.c : line 79 ) -->
+* Enabling preemption only when round robin is active
 
 # Spec 1 :
 ## To ask:
