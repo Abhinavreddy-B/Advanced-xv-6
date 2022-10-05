@@ -1,6 +1,9 @@
 K=kernel
 U=user
 schedPolicy=-DFCFS_SCHED
+ifndef SCHEDULER
+SCHEDULER=RR
+endif
 
 OBJS = \
   $K/entry.o \
@@ -57,7 +60,7 @@ LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
-CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2 $(schedPolicy)
+CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2 -D$(SCHEDULER)_SCHED
 CFLAGS += -MD
 CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
@@ -137,8 +140,8 @@ UPROGS=\
 	$U/_sigalarmtest\
 	$U/_schedtest\
 
-fs.img: mkfs/mkfs README $(UPROGS)
-	mkfs/mkfs fs.img README $(UPROGS)
+fs.img: mkfs/mkfs $(UPROGS)
+	mkfs/mkfs fs.img $(UPROGS)
 
 -include kernel/*.d user/*.d
 
@@ -166,7 +169,10 @@ QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
 qemu: $K/kernel fs.img
+	# make clean
+	echo "Using Scheduler policy $(SCHEDULER) with $(CPUS) CPUs"
 	$(QEMU) $(QEMUOPTS)
+	rm $(OBJS)
 
 .gdbinit: .gdbinit.tmpl-riscv
 	sed "s/:1234/:$(GDBPORT)/" < $^ > $@

@@ -473,7 +473,7 @@ scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
     
-#ifdef ROUND_ROBIN_SCHED
+#ifdef RR_SCHED
     
     for (p = proc; p < &proc[NPROC]; p++)
     {
@@ -501,15 +501,17 @@ scheduler(void)
     for (p = proc; p < &proc[NPROC]; p++)
     {
       acquire(&p->lock);
-
-      if (p->state == RUNNABLE && (!next_process || p->ctime < next_process->ctime))
-      {
-        if (next_process)
+      if(p->state == RUNNABLE){
+        if(next_process==0){
+          next_process = p;
+        }else if(p->ctime < next_process->ctime){
           release(&next_process->lock);
-        next_process = p;
-      }
-      else
+        }else{
+          release(&p->lock);
+        }
+      }else{
         release(&p->lock);
+      }
     }
     
     if (next_process)
