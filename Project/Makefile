@@ -140,8 +140,8 @@ UPROGS=\
 	$U/_sigalarmtest\
 	$U/_schedtest\
 
-fs.img: mkfs/mkfs $(UPROGS)
-	mkfs/mkfs fs.img $(UPROGS)
+fs.img: mkfs/mkfs README $(UPROGS)
+	mkfs/mkfs fs.img README $(UPROGS)
 
 -include kernel/*.d user/*.d
 
