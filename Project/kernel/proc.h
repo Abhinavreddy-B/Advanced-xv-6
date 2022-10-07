@@ -1,3 +1,4 @@
+#define LBS_SCHED // temprory
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;
@@ -117,4 +118,9 @@ struct proc {
   uint ctime;                  // When was the process created 
   uint etime;                  // When did the process exited
   struct sigalarm_struct alarmdata;
+
+#ifdef LBS_SCHED
+  int tickets;
+#endif
+
 };

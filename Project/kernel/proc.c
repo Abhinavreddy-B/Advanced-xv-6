@@ -151,6 +151,11 @@ found:
   p->alarmdata.nticks=0;
   p->alarmdata.trapframe_cpy=0;
   p->alarmdata.handlerfn=0;
+
+#ifdef LBS_SCHED
+  p->tickets = 1;
+#endif
+
   return p;
 }
 
@@ -328,6 +333,12 @@ fork(void)
 
   acquire(&np->lock);
   np->state = RUNNABLE;
+
+#ifdef PBS_SCHED
+  // child has same number of tickets as parent.
+  np->tickets = p->tickets;
+#endif
+
   release(&np->lock);
 
   return pid;
@@ -506,6 +517,10 @@ update_time()
   }
 }
 
+int tokenCounter(struct cpu* c){
+  
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -577,6 +592,10 @@ scheduler(void)
 
       release(&next_process->lock);
     }
+#endif
+
+#ifdef LBS_SCHED
+    int total_tokens = 
 #endif
   }
 }
