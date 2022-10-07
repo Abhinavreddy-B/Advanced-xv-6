@@ -140,6 +140,7 @@ UPROGS=\
 	$U/_sigalarmtest\
 	$U/_schedtest\
 	$U/_schedtest2\
+	$U/_schedtest3\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

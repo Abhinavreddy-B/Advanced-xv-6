@@ -94,7 +94,7 @@ usertrap(void)
   if(killed(p))
     exit(-1);
 
-# ifdef RR_SCHED
+#ifndef NON_PREEMPT
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
     yield();
@@ -170,7 +170,7 @@ kerneltrap()
     panic("kerneltrap");
   }
 
-#ifdef RR_SCHED
+#ifndef NON_PREEMPT
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     yield();

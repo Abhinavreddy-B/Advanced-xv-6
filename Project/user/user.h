@@ -26,6 +26,7 @@ int trace(int);
 int sigalarm(int, void (*fn)(void));
 int sigreturn(void);
 int waitx(int*, int* /*wtime*/, int* /*rtime*/);
+int settickets(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

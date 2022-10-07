@@ -153,3 +153,20 @@ sys_waitx(void)
     return -1;
   return ret;
 }
+
+uint64
+sys_settickets(void)
+{
+  struct proc *p = myproc();
+  acquire(&p->lock);
+  int tickets;
+  argint(0, &tickets);
+  if(tickets < 0){
+    release(&p->lock);
+    return -1;
+  }
+  p->tickets = tickets;
+  release(&p->lock);
+
+  return p->tickets;
+}

@@ -517,9 +517,35 @@ update_time()
   }
 }
 
-int tokenCounter(struct cpu* c){
-  
+#ifdef LBS_SCHED
+
+/* This code was copy pasted from grind.c */
+int
+do_rand(unsigned long *ctx)
+{
+    long hi, lo, x;
+
+    /* Transform to [1, 0x7ffffffe] range. */
+    x = (*ctx % 0x7ffffffe) + 1;
+    hi = x / 127773;
+    lo = x % 127773;
+    x = 16807 * lo - 2836 * hi;
+    if (x < 0)
+        x += 0x7fffffff;
+    /* Transform to [0, 0x7ffffffd] range. */
+    x--;
+    *ctx = x;
+    return (x);
 }
+
+unsigned long rand_next = 1;
+
+int
+rand(void)
+{
+    return (do_rand(&rand_next));
+}
+#endif
 
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -562,7 +588,7 @@ scheduler(void)
 #endif
 
 #ifdef FCFS_SCHED
-
+#define NON_PREEMPT
     struct proc *next_process = 0;
     for (p = proc; p < &proc[NPROC]; p++)
     {
@@ -595,7 +621,47 @@ scheduler(void)
 #endif
 
 #ifdef LBS_SCHED
-    int total_tokens = 
+    int total_tickets = 0;
+    for (p = proc; p < &proc[NPROC]; p++)
+    {
+      if (p->state == RUNNABLE)
+      {
+        acquire(&p->lock);
+        // printf("%s %p\n",p->name,p);
+        total_tickets += p->tickets;
+      }
+    }
+    // printf("%d\n",total_tickets);
+    if(total_tickets!= 0){
+      int randominteger = rand()%total_tickets;
+      struct proc* selected = 0;
+      int preftickets = 0;
+      for(p = proc; p < &proc[NPROC]; p++){
+        if(p->state == RUNNABLE){
+          if(preftickets+p->tickets < randominteger){
+            preftickets += p->tickets;
+            release(&p->lock);
+          }else if(selected == 0){ // first process which has higher cumulative tickets than random integer
+            selected = p;
+          }else{ // these have higher cumulative frequence , but are not the first higher. so these are not selected
+            preftickets += p->tickets;
+            release(&p->lock);
+          }
+        }
+      }
+
+      if(selected){
+        selected->state = RUNNING;
+        c->proc = selected;
+        swtch(&c->context,&selected->context);
+
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+
+        release(&selected->lock);
+      }
+    }
 #endif
   }
 }
