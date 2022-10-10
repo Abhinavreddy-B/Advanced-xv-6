@@ -152,8 +152,13 @@ found:
   p->alarmdata.trapframe_cpy=0;
   p->alarmdata.handlerfn=0;
 
-#ifdef LBS_SCHED
   p->tickets = 1;
+
+#ifdef PBS_SCHED
+  p->static_priority=60;
+  p->ntimesscheduled=0;
+  p->nsleeping=0;
+  p->nrunning=0;
 #endif
 
   return p;
@@ -334,9 +339,13 @@ fork(void)
   acquire(&np->lock);
   np->state = RUNNABLE;
 
-#ifdef PBS_SCHED
+#ifdef LBS_SCHED
   // child has same number of tickets as parent.
   np->tickets = p->tickets;
+#endif
+
+#ifdef PBS_SCHED
+  np->static_priority = p->static_priority; // set static priority of parent.
 #endif
 
   release(&np->lock);
@@ -512,6 +521,11 @@ update_time()
     acquire(&p->lock);
     if (p->state == RUNNING) {
       p->rtime++;
+#ifdef PBS_SCHED
+      p->nrunning++;
+    }else if(p->state == SLEEPING){
+      p->nsleeping++;
+#endif
     }
     release(&p->lock);
   }
@@ -547,6 +561,30 @@ rand(void)
 }
 #endif
 
+#ifdef PBS_SCHED
+// to calculate niceness.
+int
+calc_niceness(struct proc* p){
+  if(p->nrunning == 0 && p->nsleeping == 0){
+    return 5; // initial case , niceness is 5
+  }else{
+    return ((int) (((double) p->nsleeping)*10/(p->nsleeping+p->nrunning)));
+  }
+}
+
+int max(int a,int b){
+  if(a>=b) return a;
+  
+  return b;
+}
+
+int min(int a,int b){
+  if(a<=b) return a;
+  
+  return b;
+}
+
+#endif
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -661,6 +699,53 @@ scheduler(void)
 
         release(&selected->lock);
       }
+    }
+#endif
+
+#ifdef PBS_SCHED
+#define NON_PREEMPT
+
+    struct proc* selected=0;
+    int selected_DP;
+    for(p=proc;p<&proc[NPROC];p++){
+      acquire(&p->lock);
+      if(p->state == RUNNABLE){
+        if(!selected){
+          selected = p;
+          int niceness = calc_niceness(p);
+          int DP =  max(0,min(p->static_priority-niceness+5,100));
+          selected_DP = DP;
+        }else{
+          int niceness = calc_niceness(p);
+          int DP =  max(0,min(p->static_priority-niceness+5,100));
+          if(selected_DP < DP || 
+          (selected_DP == DP && selected->ntimesscheduled < p->ntimesscheduled) || 
+          (selected_DP == DP && selected->ntimesscheduled == p->ntimesscheduled && selected->ctime > p->ctime)){
+            release(&selected->lock);
+            selected = p;
+            selected_DP = DP;
+          }else{
+            release(&p->lock);
+          }
+        }
+      }else{
+        release(&p->lock);
+      }
+    }
+    if(selected != 0){
+      selected->state = RUNNING;
+      c->proc = selected;
+      selected->nrunning=0;
+      selected->nsleeping=0;
+      selected->ntimesscheduled++;
+      
+      swtch(&c->context, &selected->context);
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+
+      release(&selected->lock);
     }
 #endif
   }
@@ -873,6 +958,19 @@ procdump(void)
     else
       state = "???";
     printf("%d %s %d %d %d %s", p->pid, state,p->ctime,p->rtime,p->etime, p->name);
+  
+#ifdef FCFS_SCHED
+    printf(" ctime -> %d",p->ctime);
+#endif
+
+#ifdef LBS_SCHED
+    printf(" tickets -> %d",p->tickets);
+#endif
+
+#ifdef PBS_SCHED
+    printf(" SP -> %d",p->static_priority);
+#endif
+
     printf("\n");
   }
 }

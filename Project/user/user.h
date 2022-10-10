@@ -27,6 +27,7 @@ int sigalarm(int, void (*fn)(void));
 int sigreturn(void);
 int waitx(int*, int* /*wtime*/, int* /*rtime*/);
 int settickets(int);
+int set_priority(int,int);
 
 // ulib.c
 int stat(const char*, struct stat*);

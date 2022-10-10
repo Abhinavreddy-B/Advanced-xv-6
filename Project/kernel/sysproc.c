@@ -170,3 +170,46 @@ sys_settickets(void)
 
   return p->tickets;
 }
+
+extern struct proc proc[NPROC];
+
+//int set_priority(int new_priority, int pid)
+uint64
+sys_set_priority(void){
+
+#ifndef PBS_SCHED
+  return -1;
+#endif
+
+#ifdef PBS_SCHED
+  int new_priority;
+  argint(0,&new_priority);
+  if(new_priority<0 || new_priority > 100){
+    return -1;
+  }
+  int pid;
+  argint(0,&pid);
+  if(pid<0){
+    return -1;
+  }
+  struct proc* p;
+  int found=0;
+  for(p=proc;p<&proc[NPROC];p++){
+    if(p->pid == pid){
+      acquire(&p->lock);
+      found=1;
+      break;
+    }
+  }
+  if(!found){
+    return -1;
+  }
+  acquire(&p->lock);
+  // int old_priority = p->static_priority;
+  p->static_priority = new_priority;
+  release(&p->lock);
+
+#endif
+
+  return 0;
+}

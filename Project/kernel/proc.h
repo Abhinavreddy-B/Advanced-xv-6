@@ -1,4 +1,3 @@
-#define PBS_SCHED
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;
@@ -126,7 +125,6 @@ struct proc {
   int ntimesscheduled;
   int nsleeping;
   int nrunning;
-  int niceness;
   
 #endif
 };

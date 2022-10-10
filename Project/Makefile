@@ -141,6 +141,7 @@ UPROGS=\
 	$U/_schedtest\
 	$U/_schedtest2\
 	$U/_schedtest3\
+	$U/_setpriority\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
@@ -174,7 +175,7 @@ qemu: $K/kernel fs.img
 	# make clean
 	echo "Using Scheduler policy $(SCHEDULER) with $(CPUS) CPUs"
 	$(QEMU) $(QEMUOPTS)
-	rm $(OBJS)
+	make clean
 
 .gdbinit: .gdbinit.tmpl-riscv
 	sed "s/:1234/:$(GDBPORT)/" < $^ > $@
