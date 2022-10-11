@@ -726,7 +726,7 @@ scheduler(void)
           int DP =  max(0,min(p->static_priority-niceness+5,100));
           if(selected_DP < DP || 
           (selected_DP == DP && selected->ntimesscheduled < p->ntimesscheduled) || 
-          (selected_DP == DP && selected->ntimesscheduled == p->ntimesscheduled && selected->ctime > p->ctime)){
+          (selected_DP == DP && selected->ntimesscheduled == p->ntimesscheduled && selected->ctime < p->ctime)){
             release(&selected->lock);
             selected = p;
             selected_DP = DP;

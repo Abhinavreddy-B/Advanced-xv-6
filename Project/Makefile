@@ -173,8 +173,8 @@ QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
 qemu: $K/kernel fs.img
-	# make clean
-	echo "Using Scheduler policy $(SCHEDULER) with $(CPUS) CPUs"
+	clear -x
+	@echo "\033[33:1mUsing Scheduler policy $(SCHEDULER) with $(CPUS) CPUs\033[0m"
 	$(QEMU) $(QEMUOPTS)
 	make clean
 
