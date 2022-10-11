@@ -109,6 +109,10 @@ int             either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void            procdump(void);
 void            update_time();
 
+#ifdef MLFQ_SCHED
+void            queue_init();
+#endif
+
 // swtch.S
 void            swtch(struct context*, struct context*);
 

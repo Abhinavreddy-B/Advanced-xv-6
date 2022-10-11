@@ -20,6 +20,11 @@ main()
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
     procinit();      // process table
+    
+#ifdef MLFQ_SCHED
+    queue_init();     // initialising queues
+#endif
+
     trapinit();      // trap vectors
     trapinithart();  // install kernel trap vector
     plicinit();      // set up interrupt controller

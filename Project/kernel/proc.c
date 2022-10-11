@@ -26,6 +26,27 @@ extern char trampoline[]; // trampoline.S
 // must be acquired before any p->lock.
 struct spinlock wait_lock;
 
+// struct Queue {
+//   struct proc* front;
+//   struct proc* back;
+//   int no_of_processes;
+// };
+// making front=0,back=0,no_of_processes=0; for all 5 processes
+
+#ifdef MLFQ_SCHED
+struct Queue queues[NQUEUES];
+
+void
+queue_init(){
+  for (int i = 0; i < NQUEUES; i++)
+  {
+    queues[i].front = 0;
+    queues[i].back = 0;
+    queues[i].no_of_processes = 0;
+  }
+}
+#endif
+
 // Allocate a page for each process's kernel stack.
 // Map it high in memory, followed by an invalid
 // guard page.
@@ -157,10 +178,23 @@ found:
 #endif
 
 #ifdef PBS_SCHED
-  p->static_priority=60;
-  p->ntimesscheduled=0;
-  p->nsleeping=0;
-  p->nrunning=0;
+  p->static_priority = 60;
+  p->ntimesscheduled = 0;
+  p->nsleeping = 0;
+  p->nrunning = 0;
+#endif
+
+#ifdef MLFQ_SCHED
+  p->Queue_Num = 0;
+  p->ctime_queue = 0;
+  p->isQueued = 0;
+  for (int i = 0; i < NQUEUES; i++)
+  {
+    p->slices_used[i] = 0;
+  }
+  p->queue_next = 0;
+  p->queue_prev = 0;
+  p->wtime_queue = 0;
 #endif
 
   return p;
@@ -186,6 +220,19 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+
+#ifdef MLFQ_SCHED
+  p->queue_next = 0;
+  p->queue_prev = 0;
+  p->isQueued = 0;
+  p->ctime_queue = 0;
+  p->Queue_Num = 0;
+  p->wtime_queue = 0;
+  for (int i = 0; i < NQUEUES; i++)
+  {
+    p->slices_used[i] = 0;
+  }
+#endif
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -348,9 +395,9 @@ fork(void)
 
 #ifdef PBS_SCHED
   np->static_priority = p->static_priority; // set static priority of parent.
-  np->nrunning=0;
-  np->nsleeping=0;
-  np->ntimesscheduled=0;
+  np->nrunning = 0;
+  np->nsleeping = 0;
+  np->ntimesscheduled = 0;
 #endif
 
   release(&np->lock);
@@ -411,6 +458,10 @@ exit(int status)
   p->xstate = status;
   p->state = ZOMBIE;
   p->etime = ticks;
+
+  #ifdef MLFQ_SCHED
+  remove_from_queue(p);
+  #endif
   release(&wait_lock);
 
   // Jump into the scheduler, never to return.
@@ -754,6 +805,44 @@ scheduler(void)
       release(&selected->lock);
     }
 #endif
+
+#ifdef MLFQ_SCHED
+#define NON_PREEMPT 
+// preemption is done manually in mlfq, without the use of this macro.
+// note: mlfq is preemptive, this macro is used for automatic preemption.
+// we did manual premption here.
+  for (p = proc; p < &proc[NPROC]; p++) {
+    if (p->state == RUNNABLE && !p->isQueued) {
+      p->isQueued = 1;
+      add_to_queue(p, p->Queue_Num);
+    }
+  }
+
+  struct proc* selected = 0;
+  for (int i = 0; i < NQUEUES; i++) {
+    while (queues[i].no_of_processes != 0) {
+      struct proc *p = queues[i].front;
+      remove_from_queue(p);
+      if (p->state == RUNNABLE) {
+        selected = p;
+        break;
+      }
+    }
+    if (selected != 0) break;
+  }
+  if (selected != 0)
+  {
+    selected->state = RUNNING;
+    c->proc = selected;
+
+    swtch(&c->context, &selected->context);
+
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+  }
+
+#endif
   }
 }
 
@@ -837,6 +926,15 @@ sleep(void *chan, struct spinlock *lk)
   p->chan = chan;
   p->state = SLEEPING;
 
+#ifdef MLFQ_SCHED
+
+  p->isQueued = 0;
+  p->ctime_queue = 0;
+  p->wtime_queue = 0;
+  remove_from_queue(p);
+
+#endif
+
   sched();
 
   // Tidy up.
@@ -859,6 +957,9 @@ wakeup(void *chan)
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
         p->state = RUNNABLE;
+#ifdef MLFQ_SCHED
+        add_to_queue(p, p->Queue_Num);
+#endif
       }
       release(&p->lock);
     }
@@ -880,6 +981,9 @@ kill(int pid)
       if(p->state == SLEEPING){
         // Wake process from sleep().
         p->state = RUNNABLE;
+#ifdef MLFQ_SCHED
+        add_to_queue(p, p->Queue_Num);
+#endif
       }
       release(&p->lock);
       return 0;

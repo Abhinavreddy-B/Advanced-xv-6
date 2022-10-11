@@ -88,6 +88,16 @@ struct sigalarm_struct {
   struct trapframe *trapframe_cpy;  // copy of that trapframe when interrupt occurs ( also used to avoid recurrent calls to fn )
 };
 
+#ifdef MLFQ_SCHED
+struct Queue {
+  struct proc* front;
+  struct proc* back;
+  int no_of_processes;
+};
+
+int slices[] = {1, 2, 4, 8, 16};
+#endif
+
 // Per-process state
 struct proc {
   struct spinlock lock;
@@ -129,4 +139,19 @@ struct proc {
   int nrunning;
 #endif
 
+#ifdef MLFQ_SCHED
+  int isQueued;
+  int Queue_Num;
+  int slices_used[NQUEUES];
+  int ctime_queue;
+  int wtime_queue;
+  struct proc* queue_next;
+  struct proc* queue_prev;
+#endif
+
 };
+
+#ifdef MLFQ_SCHED
+  void remove_from_queue(struct proc* p);
+  void add_to_queue(struct proc* p,int queue_num);
+#endif

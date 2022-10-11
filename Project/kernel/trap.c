@@ -16,6 +16,10 @@ void kernelvec();
 
 extern int devintr();
 
+#ifdef MLFQ_SCHED
+extern int slices[];
+extern struct Queue queues[];
+#endif
 void
 trapinit(void)
 {
@@ -82,6 +86,29 @@ usertrap(void)
           memmove(p->alarmdata.trapframe_cpy, p->trapframe, PGSIZE);
           p->trapframe->epc = p->alarmdata.handlerfn;
         }
+
+#ifdef MLFQ_SCHED
+        p->slices_used[p->Queue_Num]++;
+        if(p->slices_used[p->Queue_Num] % slices[p->Queue_Num] == 0 && p->Queue_Num + 1 < NQUEUES){ // 0 indexing
+          remove_from_queue(p);
+          p->Queue_Num++;
+          add_to_queue(p, p->Queue_Num);
+          release(&p->lock);
+          yield();
+          usertrapret();
+          return;
+        }else if(p->slices_used[p->Queue_Num] % slices[p->Queue_Num] != 0){
+          for(int i=0;i<p->Queue_Num;i++){
+            if(queues[i].no_of_processes != 0){
+              release(&p->lock);
+              yield();
+              usertrapret();
+              return;
+            }
+          }
+        }
+#endif
+        
       }
       release(&p->lock);
     }
@@ -170,7 +197,6 @@ kerneltrap()
     panic("kerneltrap");
   }
 
-#ifndef NON_PREEMPT
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
     yield();
@@ -180,7 +206,6 @@ kerneltrap()
   w_sepc(sepc);
   w_sstatus(sstatus);
 
-#endif
 }
 
 void
