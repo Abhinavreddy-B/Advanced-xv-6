@@ -46,6 +46,7 @@ queue_init(){
     queues[i].no_of_processes = 0;
   }
 }
+
 #endif
 
 // Allocate a page for each process's kernel stack.

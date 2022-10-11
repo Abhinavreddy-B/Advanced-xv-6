@@ -14,12 +14,13 @@ extern char trampoline[], uservec[], userret[];
 // in kernelvec.S, calls kerneltrap().
 void kernelvec();
 
+#ifdef MLFQ_SCHED
+extern struct Queue queues[];
+extern int slices[];
+#endif
+
 extern int devintr();
 
-#ifdef MLFQ_SCHED
-extern int slices[];
-extern struct Queue queues[];
-#endif
 void
 trapinit(void)
 {

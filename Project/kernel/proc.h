@@ -94,7 +94,6 @@ struct Queue {
   struct proc* back;
   int no_of_processes;
 };
-
 #endif
 
 // Per-process state

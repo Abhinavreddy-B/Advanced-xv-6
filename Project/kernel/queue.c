@@ -6,9 +6,9 @@
 #include "proc.h"
 #include "defs.h"
 
-extern struct Queue queues[];
-
 #ifdef MLFQ_SCHED
+extern struct Queue queues[NQUEUES];
+
 void remove_from_queue(struct proc *p)
 {
   p->isQueued = 0;
