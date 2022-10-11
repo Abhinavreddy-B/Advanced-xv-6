@@ -34,6 +34,7 @@ struct spinlock wait_lock;
 // making front=0,back=0,no_of_processes=0; for all 5 processes
 
 #ifdef MLFQ_SCHED
+int slices[] = {1, 2, 4, 8, 16};
 struct Queue queues[NQUEUES];
 
 void
@@ -832,6 +833,8 @@ scheduler(void)
   }
   if (selected != 0)
   {
+    acquire(&selected->lock);
+    printf("Hello\n");
     selected->state = RUNNING;
     c->proc = selected;
 
@@ -840,6 +843,7 @@ scheduler(void)
     // Process is done running for now.
     // It should have changed its p->state before coming back.
     c->proc = 0;
+    release(&selected->lock);
   }
 
 #endif
