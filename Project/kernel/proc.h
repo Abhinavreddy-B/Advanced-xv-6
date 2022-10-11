@@ -94,8 +94,6 @@ struct Queue {
   struct proc* back;
   int no_of_processes;
 };
-
-int slices[] = {1, 2, 4, 8, 16};
 #endif
 
 // Per-process state
