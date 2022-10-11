@@ -740,10 +740,10 @@ scheduler(void)
     }
     if(selected != 0){
       selected->state = RUNNING;
-      c->proc = selected;
       selected->nrunning=0;
       selected->nsleeping=0;
       selected->ntimesscheduled++;
+      c->proc = selected;
       
       swtch(&c->context, &selected->context);
 
