@@ -118,13 +118,15 @@ struct proc {
   uint etime;                  // When did the process exited
   struct sigalarm_struct alarmdata;
 
+#ifdef LBS_SCHED
   int tickets;
+#endif
 
 #ifdef PBS_SCHED
   int static_priority;
   int ntimesscheduled;
   int nsleeping;
   int nrunning;
-  
 #endif
+
 };

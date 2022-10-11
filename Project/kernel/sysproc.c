@@ -157,6 +157,12 @@ sys_waitx(void)
 uint64
 sys_settickets(void)
 {
+
+#ifndef LBS_SCHED
+  return -1;
+#endif
+
+#ifdef LBS_SCHED
   struct proc *p = myproc();
   acquire(&p->lock);
   int tickets;
@@ -169,11 +175,12 @@ sys_settickets(void)
   release(&p->lock);
 
   return p->tickets;
+#endif
+
 }
 
 extern struct proc proc[NPROC];
 
-//int set_priority(int new_priority, int pid)
 uint64
 sys_set_priority(void){
 
