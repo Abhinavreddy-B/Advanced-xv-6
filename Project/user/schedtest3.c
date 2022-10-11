@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
         else if (pid == 0)
         {
             int curr_child = child;
-            settickets(ntest - curr_child);
+            settickets((ntest - curr_child)*5);
             for (long long i = 0; i < 5000000000; i++)
             {
             }

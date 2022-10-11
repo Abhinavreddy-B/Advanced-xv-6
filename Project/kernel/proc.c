@@ -345,6 +345,7 @@ growproc(int n)
 int
 fork(void)
 {
+  printf("fork?");
   int i, pid;
   struct proc *np;
   struct proc *p = myproc();
@@ -428,6 +429,7 @@ reparent(struct proc *p)
 void
 exit(int status)
 {
+  printf("exit?");
   struct proc *p = myproc();
 
   if(p == initproc)
@@ -476,6 +478,7 @@ exit(int status)
 int
 wait(uint64 addr)
 {
+  printf("wait?");
   struct proc *pp;
   int havekids, pid;
   struct proc *p = myproc();
@@ -679,7 +682,7 @@ scheduler(void)
         // It should have changed its p->state before coming back.
         c->proc = 0;
       }
-      release(&p->lock);
+      // release(&p->lock);
     }
 #endif
 
@@ -822,24 +825,22 @@ scheduler(void)
 
   struct proc* selected = 0;
   for (int i = 0; i < NQUEUES; i++) {
+    // printf("%d *\n",queues[i].no_of_processes);
     while (queues[i].no_of_processes != 0) {
       struct proc *p = queues[i].front;
       remove_from_queue(p);
-      if (p->state == RUNNABLE) {
-        selected = p;
-        break;
-      }
+      selected = p;
+      break;
     }
     if (selected != 0) break;
   }
   if (selected != 0)
   {
     acquire(&selected->lock);
-    printf("Hello\n");
     selected->state = RUNNING;
     c->proc = selected;
-
     swtch(&c->context, &selected->context);
+    printf("%s\n",selected->name);
 
     // Process is done running for now.
     // It should have changed its p->state before coming back.

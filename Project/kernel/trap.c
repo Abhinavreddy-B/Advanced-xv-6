@@ -41,6 +41,7 @@ trapinithart(void)
 void
 usertrap(void)
 {
+        printf("Hello2\n");
   int which_dev = 0;
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
