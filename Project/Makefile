@@ -142,6 +142,7 @@ UPROGS=\
 	$U/_schedtest2\
 	$U/_schedtest3\
 	$U/_setpriority\
+	$U/_temp\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

@@ -346,6 +346,9 @@ fork(void)
 
 #ifdef PBS_SCHED
   np->static_priority = p->static_priority; // set static priority of parent.
+  np->nrunning=0;
+  np->nsleeping=0;
+  np->ntimesscheduled=0;
 #endif
 
   release(&np->lock);
@@ -636,6 +639,7 @@ scheduler(void)
           next_process = p;
         }else if(p->ctime < next_process->ctime){
           release(&next_process->lock);
+          next_process = p;
         }else{
           release(&p->lock);
         }
@@ -710,7 +714,7 @@ scheduler(void)
     for(p=proc;p<&proc[NPROC];p++){
       acquire(&p->lock);
       if(p->state == RUNNABLE){
-        if(!selected){
+        if(selected == 0){
           selected = p;
           int niceness = calc_niceness(p);
           int DP =  max(0,min(p->static_priority-niceness+5,100));

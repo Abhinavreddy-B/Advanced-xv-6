@@ -207,6 +207,8 @@ sys_set_priority(void){
   acquire(&p->lock);
   // int old_priority = p->static_priority;
   p->static_priority = new_priority;
+  p->nrunning=0;
+  p->nsleeping=0;
   release(&p->lock);
 
 #endif
