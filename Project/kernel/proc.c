@@ -152,7 +152,9 @@ found:
   p->alarmdata.trapframe_cpy=0;
   p->alarmdata.handlerfn=0;
 
+#ifdef LBS_SCHED
   p->tickets = 1;
+#endif
 
 #ifdef PBS_SCHED
   p->static_priority=60;
