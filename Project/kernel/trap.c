@@ -41,7 +41,6 @@ trapinithart(void)
 void
 usertrap(void)
 {
-        printf("Hello2\n");
   int which_dev = 0;
 
   if((r_sstatus() & SSTATUS_SPP) != 0)
@@ -92,9 +91,7 @@ usertrap(void)
 #ifdef MLFQ_SCHED
         p->slices_used[p->Queue_Num]++;
         if(p->slices_used[p->Queue_Num] % slices[p->Queue_Num] == 0 && p->Queue_Num + 1 < NQUEUES){ // 0 indexing
-          remove_from_queue(p);
           p->Queue_Num++;
-          add_to_queue(p, p->Queue_Num);
           release(&p->lock);
           yield();
           usertrapret();

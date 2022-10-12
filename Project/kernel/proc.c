@@ -26,12 +26,6 @@ extern char trampoline[]; // trampoline.S
 // must be acquired before any p->lock.
 struct spinlock wait_lock;
 
-// struct Queue {
-//   struct proc* front;
-//   struct proc* back;
-//   int no_of_processes;
-// };
-// making front=0,back=0,no_of_processes=0; for all 5 processes
 
 #ifdef MLFQ_SCHED
 int slices[] = {1, 2, 4, 8, 16};
@@ -345,7 +339,6 @@ growproc(int n)
 int
 fork(void)
 {
-  printf("fork?");
   int i, pid;
   struct proc *np;
   struct proc *p = myproc();
@@ -429,9 +422,7 @@ reparent(struct proc *p)
 void
 exit(int status)
 {
-  printf("exit?");
   struct proc *p = myproc();
-
   if(p == initproc)
     panic("init exiting");
 
@@ -463,9 +454,6 @@ exit(int status)
   p->state = ZOMBIE;
   p->etime = ticks;
 
-  #ifdef MLFQ_SCHED
-  remove_from_queue(p);
-  #endif
   release(&wait_lock);
 
   // Jump into the scheduler, never to return.
@@ -478,7 +466,6 @@ exit(int status)
 int
 wait(uint64 addr)
 {
-  printf("wait?");
   struct proc *pp;
   int havekids, pid;
   struct proc *p = myproc();
@@ -818,14 +805,15 @@ scheduler(void)
 // we did manual premption here.
   for (p = proc; p < &proc[NPROC]; p++) {
     if (p->state == RUNNABLE && !p->isQueued) {
-      p->isQueued = 1;
       add_to_queue(p, p->Queue_Num);
     }
   }
 
   struct proc* selected = 0;
   for (int i = 0; i < NQUEUES; i++) {
-    // printf("%d *\n",queues[i].no_of_processes);
+    // if(queues[i].no_of_processes != 0){
+      // printf("%d *\n",queues[i].no_of_processes);
+    // }
     while (queues[i].no_of_processes != 0) {
       struct proc *p = queues[i].front;
       remove_from_queue(p);
@@ -840,7 +828,6 @@ scheduler(void)
     selected->state = RUNNING;
     c->proc = selected;
     swtch(&c->context, &selected->context);
-    printf("%s\n",selected->name);
 
     // Process is done running for now.
     // It should have changed its p->state before coming back.
@@ -933,11 +920,9 @@ sleep(void *chan, struct spinlock *lk)
   p->state = SLEEPING;
 
 #ifdef MLFQ_SCHED
-
-  p->isQueued = 0;
+  // printf("sleep - %s\n",p->name);
   p->ctime_queue = 0;
   p->wtime_queue = 0;
-  remove_from_queue(p);
 
 #endif
 
@@ -963,9 +948,6 @@ wakeup(void *chan)
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
         p->state = RUNNABLE;
-#ifdef MLFQ_SCHED
-        add_to_queue(p, p->Queue_Num);
-#endif
       }
       release(&p->lock);
     }
@@ -987,9 +969,6 @@ kill(int pid)
       if(p->state == SLEEPING){
         // Wake process from sleep().
         p->state = RUNNABLE;
-#ifdef MLFQ_SCHED
-        add_to_queue(p, p->Queue_Num);
-#endif
       }
       release(&p->lock);
       return 0;
@@ -1065,6 +1044,10 @@ procdump(void)
   struct proc *p;
   char *state;
 
+#ifdef MLFQ_SCHED
+  printf("pid\tstate\tct\trt\tet\tname\t\tQueued?\tQnum\tq0\tq1\tq2\tq3\tq4\t");
+#endif
+
   printf("\n");
   for(p = proc; p < &proc[NPROC]; p++){
     if(p->state == UNUSED)
@@ -1073,7 +1056,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    printf("%d %s %d %d %d %s", p->pid, state,p->ctime,p->rtime,p->etime, p->name);
+    printf("%d\t%s\t%d\t%d\t%d\t%s\t", p->pid, state,p->ctime,p->rtime,p->etime, p->name);
   
 #ifdef FCFS_SCHED
     printf(" ctime -> %d",p->ctime);
@@ -1087,6 +1070,12 @@ procdump(void)
     printf(" SP -> %d",p->static_priority);
 #endif
 
+#ifdef MLFQ_SCHED
+    printf("%d\t%d",p->isQueued,p->Queue_Num,queues[p->Queue_Num].no_of_processes);
+    for(int i=0;i<NQUEUES;i++){
+      printf("\t%d",p->slices_used[i]);
+    }
+#endif
     printf("\n");
   }
 }
