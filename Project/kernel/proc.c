@@ -633,6 +633,22 @@ int min(int a,int b){
 }
 
 #endif
+
+#ifdef MLFQ_SCHED
+void aging(){
+  struct proc* p;
+  for(p=proc;p<&proc[NPROC];p++){
+    if(p->state==RUNNABLE && p->isQueued && p->Queue_Num!=0 && ticks-p->ctime_queue >= AGE){
+      // acquire(&p->lock);
+      remove_from_queue(p);
+      p->Queue_Num--;
+      p->ctime_queue=ticks;
+      add_to_queue(p,p->Queue_Num);
+      // release(&p->lock);
+    }
+  }
+}
+#endif
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -669,12 +685,12 @@ scheduler(void)
         // It should have changed its p->state before coming back.
         c->proc = 0;
       }
-      // release(&p->lock);
+      release(&p->lock);
     }
 #endif
 
 #ifdef FCFS_SCHED
-#define NON_PREEMPT
+// #define NON_PREEMPT
     struct proc *next_process = 0;
     for (p = proc; p < &proc[NPROC]; p++)
     {
@@ -799,7 +815,6 @@ scheduler(void)
 #endif
 
 #ifdef MLFQ_SCHED
-#define NON_PREEMPT 
 // preemption is done manually in mlfq, without the use of this macro.
 // note: mlfq is preemptive, this macro is used for automatic preemption.
 // we did manual premption here.
@@ -1045,7 +1060,7 @@ procdump(void)
   char *state;
 
 #ifdef MLFQ_SCHED
-  printf("pid\tstate\tct\trt\tet\tname\t\tQueued?\tQnum\tq0\tq1\tq2\tq3\tq4\t");
+  printf("pid\tstate\tct\trt\tet\tname\t\tQueued?\tQnum\tq0\tq1\tq2\tq3\tq4\tQwtim\t");
 #endif
 
   printf("\n");
@@ -1075,6 +1090,7 @@ procdump(void)
     for(int i=0;i<NQUEUES;i++){
       printf("\t%d",p->slices_used[i]);
     }
+    printf("\t%d",ticks-p->ctime_queue);
 #endif
     printf("\n");
   }

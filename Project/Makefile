@@ -1,8 +1,17 @@
 K=kernel
 U=user
-schedPolicy=-DFCFS_SCHED
 ifndef SCHEDULER
 SCHEDULER=RR
+endif
+
+SCHED_FLAGS=-D$(SCHEDULER)_SCHED 
+
+ifeq ($(SCHEDULER),MLFQ)
+SCHED_FLAGS += -DNON_PREEMPT
+endif
+
+ifeq ($(SCHEDULER),FCFS)
+SCHED_FLAGS += -DNON_PREEMPT
 endif
 
 OBJS = \
@@ -61,7 +70,7 @@ LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
-CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2 -D$(SCHEDULER)_SCHED -g
+CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2 $(SCHED_FLAGS)
 CFLAGS += -MD
 CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
@@ -144,6 +153,7 @@ UPROGS=\
 	$U/_schedtest3\
 	$U/_setpriority\
 	$U/_temp\
+	$U/_schedulertest\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
