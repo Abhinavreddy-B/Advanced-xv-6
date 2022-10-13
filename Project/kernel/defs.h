@@ -9,6 +9,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);
@@ -63,6 +64,13 @@ void            ramdiskrw(struct buf*);
 void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
+void            init_ref_cnt();
+void            increment_ref_cnt(void* pa);
+void            increment_ref_cnt_safe(void* pa);
+void            decrement_ref_cnt(void* pa);
+void            decrement_ref_cnt_safe(void* pa);
+uint            get_ref_cnt(void * pa);
+void            reset_ref_cnt(void *pa);
 
 // log.c
 void            initlog(int, struct superblock*);

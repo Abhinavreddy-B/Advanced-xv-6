@@ -23,6 +23,57 @@ struct {
   struct run *freelist;
 } kmem;
 
+struct Ref_cnt {
+  struct spinlock lock;
+  uint cnt[PHYSTOP >> 12];
+} page_ref_cnt;
+
+
+void
+init_ref_cnt(){
+  printf("Hello\n");
+  initlock(&page_ref_cnt.lock,"reference_count");
+  acquire(&kmem.lock);
+  memset(page_ref_cnt.cnt,0,sizeof(page_ref_cnt.cnt));
+  release(&kmem.lock);
+}
+
+void
+increment_ref_cnt(void* pa){
+  page_ref_cnt.cnt[pa - (void *) 0]++;
+}
+
+void
+decrement_ref_cnt(void* pa){
+  page_ref_cnt.cnt[pa - (void *) 0]++;
+}
+
+void
+increment_ref_cnt_safe(void* pa){
+  acquire(&page_ref_cnt.lock);
+  page_ref_cnt.cnt[pa - (void *) 0]++;
+  release(&page_ref_cnt.lock);
+}
+
+void
+decrement_ref_cnt_safe(void* pa){
+  acquire(&page_ref_cnt.lock);
+  page_ref_cnt.cnt[pa - (void *) 0]++;
+  release(&page_ref_cnt.lock);
+}
+
+uint
+get_ref_cnt(void * pa){
+  return page_ref_cnt.cnt[pa - (void *) 0];
+}
+
+void
+reset_ref_cnt(void *pa){
+  acquire(&page_ref_cnt.lock);
+  page_ref_cnt.cnt[pa - (void *) 0]=0;
+  release(&page_ref_cnt.lock);
+}
+
 void
 kinit()
 {
@@ -51,6 +102,19 @@ kfree(void *pa)
   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
 
+  // decrement count
+  acquire(&page_ref_cnt.lock);
+  decrement_ref_cnt(pa);
+  if(get_ref_cnt(pa) > 0 ){
+    // do nothing if there are some other processes algo using the same page.
+    release(&page_ref_cnt.lock);
+    return;
+  }
+
+  //if not process is using the page....
+  reset_ref_cnt(pa);
+  release(&page_ref_cnt.lock);
+
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
 
@@ -76,7 +140,12 @@ kalloc(void)
     kmem.freelist = r->next;
   release(&kmem.lock);
 
-  if(r)
+  if(r){ 
     memset((char*)r, 5, PGSIZE); // fill with junk
+    acquire(&page_ref_cnt.lock);
+    reset_ref_cnt((void*) r);
+    increment_ref_cnt((void *) r);
+    release(&page_ref_cnt.lock);
+  }
   return (void*)r;
 }

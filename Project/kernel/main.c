@@ -25,7 +25,8 @@ main()
 #ifdef MLFQ_SCHED
     queue_init();     // initialising queues
 #endif
-
+    
+    init_ref_cnt();
     trapinit();      // trap vectors
     trapinithart();  // install kernel trap vector
     plicinit();      // set up interrupt controller

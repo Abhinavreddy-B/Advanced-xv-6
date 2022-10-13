@@ -5,6 +5,7 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
 
 /*
  * the kernel's page table.
@@ -14,6 +15,8 @@ pagetable_t kernel_pagetable;
 extern char etext[];  // kernel.ld sets this to end of kernel code.
 
 extern char trampoline[]; // trampoline.S
+
+extern struct Ref_cnt page_ref_cnt;
 
 // Make a direct-map page table for the kernel.
 pagetable_t
@@ -308,7 +311,7 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   pte_t *pte;
   uint64 pa, i;
   uint flags;
-  char *mem;
+  // char *mem;
 
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walk(old, i, 0)) == 0)
@@ -317,11 +320,23 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
       panic("uvmcopy: page not present");
     pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
+    // if((mem = kalloc()) == 0)
+    //   goto err;
+    // memmove(mem, (char*)pa, PGSIZE);
+    flags = (flags | PTE_COW) & (~PTE_W); // copy on write mapping
+    
+    // make child map to parent's pagetable.
+    if(mappages(new, i, PGSIZE, (uint64)pa, flags) != 0){
+      // kfree(mem);
       goto err;
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
-      kfree(mem);
+    }
+
+    increment_ref_cnt_safe((void*)pa);
+    
+    // map parent to the same pagetable without write permissions
+    uvmunmap(old,i,1,0);
+    if(mappages(old, i, PGSIZE, (uint64)pa, flags) != 0){
+      // kfree(mem);
       goto err;
     }
   }

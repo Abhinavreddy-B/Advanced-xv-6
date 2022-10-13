@@ -21,6 +21,8 @@ extern int slices[];
 
 extern int devintr();
 
+extern struct Ref_cnt page_ref_cnt;
+
 void
 trapinit(void)
 {
@@ -70,7 +72,55 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
+  }else if(r_scause() == 15){
+    // got scause 15 when manually tested by writing to "write only page".
+    printf("Hello\n");
+    uint64 vir_addr = PGROUNDDOWN(r_stval()); // get virtual page 
+    pte_t *pte = walk(p->pagetable,vir_addr,0); // physical address
+    if(pte == 0){
+      printf("Physical Page not found\n");
+      p->killed=1;
+      goto mapping_trap;
+    }else{
+      if(((*pte & PTE_V) == 0)||((*pte & PTE_U) == 0)){
+        printf("This page is not valid/ is not accessible by this process\n");
+        goto mapping_trap;
+      }else{
+        if((*pte & PTE_COW) == 0){
+          // not a COW mapped page
+          goto mapping_trap;
+        }else{
+          // get the previous flags
+          uint flags= PTE_FLAGS(*pte);
+
+          // remove COW flag, add Write flag
+          flags = (flags & ~PTE_COW) | PTE_W;
+          
+          char *mem;
+          if ((mem = kalloc()) == 0){
+            printf("New Page wasnt allocated\n");
+            goto mapping_trap;
+          }
+          
+          //get page address
+          char *pa = (char *)PTE2PA(*pte);
+
+          // memory allocated, copy pte contents to mem
+          memmove(mem,pa,PGSIZE);
+
+          uvmunmap(p->pagetable,vir_addr,1,0); // unmap the previous page table from the process
+
+          decrement_ref_cnt_safe((void *)pa);
+          if(mappages(p->pagetable,vir_addr,PGSIZE, (uint64) mem, flags) != 0){
+            p->killed = 1;
+            printf("wrong in mappages in trap.\n");
+            goto mapping_trap;
+          }
+        }
+      }
+    }
+
+  }else if((which_dev = devintr()) != 0){
     if(which_dev == 2){
       // enters here only if it is timer interrupt
       acquire(&p->lock);
@@ -117,6 +167,7 @@ usertrap(void)
       release(&p->lock);
     }
   } else {
+    mapping_trap:
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
     setkilled(p);
