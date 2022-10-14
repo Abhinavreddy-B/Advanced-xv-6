@@ -34,6 +34,43 @@ trapinithart(void)
   w_stvec((uint64)kernelvec);
 }
 
+int COW_handler(uint64 Virtual_addr,pagetable_t pagetable){
+  struct proc* p= myproc();
+  if (Virtual_addr >= MAXVA || (Virtual_addr >= PGROUNDDOWN(p->trapframe->sp) - PGSIZE && Virtual_addr <= PGROUNDDOWN(p->trapframe->sp)))
+  {
+    return 1;
+  }
+  pte_t *pte;
+  uint64 pa;
+  uint flags;
+  Virtual_addr = (uint64)PGROUNDDOWN(Virtual_addr);
+  pte = walk(pagetable, Virtual_addr, 0);
+  if (pte == 0)
+  {
+    return 1;
+  }
+  pa = PTE2PA(*pte);
+  if (pa == 0)
+  {
+    return 1;
+  }
+  flags = PTE_FLAGS(*pte);
+  if (flags & PTE_COW)
+  {
+    flags = (flags & ~PTE_COW) | PTE_W;
+    char *mem;
+    mem = kalloc();
+    if (mem == 0)
+    {
+      return 1;
+    }
+    memmove(mem, (void *)pa, PGSIZE);
+    *pte = PA2PTE(mem) | flags;
+    kfree((void *)pa);
+  }
+  return 0;
+}
+
 //
 // handle an interrupt, exception, or system call from user space.
 // called from trampoline.S
@@ -55,6 +92,7 @@ usertrap(void)
   // save user program counter.
   p->trapframe->epc = r_sepc();
   
+  uint64 va = r_stval();
   if(r_scause() == 8){
     // system call
 
@@ -70,7 +108,11 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
+  }else if(r_scause()==15||r_scause()==13){
+    if(COW_handler(va,p->pagetable)){
+      p->killed=1;
+    };
+  }else if((which_dev = devintr()) != 0){
     if(which_dev == 2){
       // enters here only if it is timer interrupt
       acquire(&p->lock);

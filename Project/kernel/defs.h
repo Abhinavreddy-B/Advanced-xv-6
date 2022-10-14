@@ -64,6 +64,7 @@ void            ramdiskrw(struct buf*);
 void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
+void            inc_page_ref(void*pa);
 
 // log.c
 void            initlog(int, struct superblock*);
@@ -154,6 +155,7 @@ void            trapinit(void);
 void            trapinithart(void);
 extern struct spinlock tickslock;
 void            usertrapret(void);
+int             COW_handler(uint64 Virtual_addr,pagetable_t pagetable);
 
 // uart.c
 void            uartinit(void);
