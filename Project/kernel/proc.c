@@ -768,7 +768,7 @@ scheduler(void)
 #endif
 
 #ifdef PBS_SCHED
-#define NON_PREEMPT
+// #define NON_PREEMPT
 
     struct proc* selected=0;
     int selected_DP;

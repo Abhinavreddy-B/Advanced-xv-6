@@ -14,6 +14,10 @@ ifeq ($(SCHEDULER),FCFS)
 SCHED_FLAGS += -DNON_PREEMPT
 endif
 
+ifeq ($(SCHEDULER),PBS)
+SCHED_FLAGS += -DNON_PREEMPT
+endif
+
 OBJS = \
   $K/entry.o \
   $K/start.o \
