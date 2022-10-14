@@ -36,7 +36,7 @@ trapinithart(void)
 
 int COW_handler(uint64 Virtual_addr,pagetable_t pagetable){
   struct proc* p= myproc();
-  if (Virtual_addr >= MAXVA || (Virtual_addr >= PGROUNDDOWN(p->trapframe->sp) - PGSIZE && Virtual_addr <= PGROUNDDOWN(p->trapframe->sp)))
+  if (Virtual_addr >= MAXVA || (Virtual_addr >= PGROUNDDOWN(p->trapframe->sp) - PGSIZE && Virtual_addr <= PGROUNDDOWN(p->trapframe->sp)) || Virtual_addr == 0)
   {
     return 1;
   }
@@ -66,7 +66,11 @@ int COW_handler(uint64 Virtual_addr,pagetable_t pagetable){
     }
     memmove(mem, (void *)pa, PGSIZE);
     *pte = PA2PTE(mem) | flags;
+    uvmunmap(pagetable,Virtual_addr,1,0);
+    mappages(pagetable,Virtual_addr,1,(uint64) mem,flags);
     kfree((void *)pa);
+  }else{
+    return 1;
   }
   return 0;
 }
@@ -108,10 +112,6 @@ usertrap(void)
     intr_on();
 
     syscall();
-  }else if(r_scause()==15||r_scause()==13){
-    if(COW_handler(va,p->pagetable)){
-      p->killed=1;
-    };
   }else if((which_dev = devintr()) != 0){
     if(which_dev == 2){
       // enters here only if it is timer interrupt
@@ -158,6 +158,11 @@ usertrap(void)
       }
       release(&p->lock);
     }
+  }else if(r_scause()==15 || r_scause() == 13){
+    int return_val = COW_handler(va,p->pagetable);
+    if(return_val == 1){
+      setkilled(p);
+    };
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());

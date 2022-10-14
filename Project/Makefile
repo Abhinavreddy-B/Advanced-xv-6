@@ -8,6 +8,7 @@ SCHED_FLAGS=-D$(SCHEDULER)_SCHED
 
 ifeq ($(SCHEDULER),MLFQ)
 SCHED_FLAGS += -DNON_PREEMPT
+CPUS=1
 endif
 
 ifeq ($(SCHEDULER),FCFS)
@@ -158,6 +159,7 @@ UPROGS=\
 	$U/_setpriority\
 	$U/_temp\
 	$U/_schedulertest\
+	$U/_cowtests\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
