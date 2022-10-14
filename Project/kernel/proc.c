@@ -690,7 +690,7 @@ scheduler(void)
 #endif
 
 #ifdef FCFS_SCHED
-// #define NON_PREEMPT
+
     struct proc *next_process = 0;
     for (p = proc; p < &proc[NPROC]; p++)
     {
@@ -724,6 +724,7 @@ scheduler(void)
 #endif
 
 #ifdef LBS_SCHED
+
     int total_tickets = 0;
     for (p = proc; p < &proc[NPROC]; p++)
     {
@@ -768,7 +769,6 @@ scheduler(void)
 #endif
 
 #ifdef PBS_SCHED
-// #define NON_PREEMPT
 
     struct proc* selected=0;
     int selected_DP;
@@ -818,6 +818,7 @@ scheduler(void)
 // preemption is done manually in mlfq, without the use of this macro.
 // note: mlfq is preemptive, this macro is used for automatic preemption.
 // we did manual premption here.
+
   for (p = proc; p < &proc[NPROC]; p++) {
     if (p->state == RUNNABLE && !p->isQueued) {
       add_to_queue(p, p->Queue_Num);
