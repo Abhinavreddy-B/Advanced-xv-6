@@ -150,7 +150,7 @@ struct proc {
 };
 
 #ifdef MLFQ_SCHED
-  void remove_from_queue(struct proc* p);
   void add_to_queue(struct proc* p,int queue_num);
+  void remove_from_queue(struct proc* p);
   void aging();
 #endif

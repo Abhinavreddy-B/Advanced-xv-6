@@ -131,7 +131,7 @@ usertrap(void)
         }
 
 #ifdef MLFQ_SCHED
-        // aging();
+        aging();
         p->slices_used[p->Queue_Num]++;
         if(p->slices_used[p->Queue_Num] % slices[p->Queue_Num] == 0 && p->Queue_Num < NQUEUES){ // 0 indexing
           // printf("Entered here with pid %d\n",p->pid);

@@ -47,7 +47,7 @@
 - If a valid process has been selected, i.e., `next_process` is non-zero, we allocate CPU to that process pointed to by `next_process` by using the `swtch` function to perform context switch.
 - This implementation naturally guarantees that the process with the least creation time is allocated CPU time first and thus the principle of `FCFS` is followed.
 
-### <ins>Lottery Based Scheduler</ins>:
+### <ins>Lottery Based Scheduler (LBS)</ins>:
 - In the case of `LBS` scheduling algorithm, we add another int variable named `tickets` to the `proc` struct in the `kernel/proc.h` file to keep track of the number of tickets the process possesses.
 - The value of `tickets` is set to `1` by default in the `allocproc` function in the `kernel/proc.c` file. The number of tickets a process has can be modified by the `settickets` system call.
 - The `settickets` system call is assigned the system call number of `26` in the `kernel/syscall.h` file.
@@ -56,7 +56,7 @@
 - To choose the process, we use the concept of Stochastic simulation. We first calculate the total number of tickets across all `RUNNABLE` processes and store it in the `total_tickets` variable of type int, initially set to `0`. Then, we randomly generate a number between `0` and `total_tickets - 1` and store it in the int variable `randominteger` and then, we select the process which has cumulative tickets greater than or equal to `randominteger`. The cumulative tickets are stored in the int variable `preftickets`. The locks of the processes with cumulative tickets less than `randominteger` and those process which are not the very first process having cumulative tickets greater than or equal to `randominteger` are released. The selcted process is allotted CPU time accordingly.
 - To ensure that every child process receives the same number of tickets as its parent, the `fork` function in `kernel/proc.c` is modified such that the tickets of the child are set to the same value as that of its parent if the `LBS` scheduling algorithm is active.
 
-### <ins>Priority Based Scheduler</ins>:
+### <ins>Priority Based Scheduler (PBS)</ins>:
 - When the `PBS` scheduling algorithm is active, we add the fields `static_priority`, `ntimesscheduled`, `nsleeping` and `nrunning` to the `proc` struct of the `kernel/proc.h` file, each of which represent the static priority of the process, the number of times the process has been scheduled, the number of ticks for which the process has been in `SLEEPING` state and the number of ticks for which the process has been in `RUNNING` state, which are initially set to `60`, `0`, `0` and `0` in the `allocproc` function of the `kernel/proc.c` file
 - Every time the `update_time` function is called, `nsleeping` and `nrunning` are incremented if the process is in `SLEEPING` or `RUNNING` state respectively.
 - The `calc_niceness` function in the `kernel/proc.c` file calculates which returns the niceness of the process provided to it as a paramter and is calculated according to the given formula.
@@ -64,5 +64,14 @@
 - The selected process is then allocated CPU time accordingly and thus the process with the highest priority is selected.
 - The `set_priority` system call is assigned the system call number of `27` in the `kernel/syscall.h` file.
 - If the system call is called as followed `int set_priority(int new_priority, int pid)`, then `-1` is returned in the case of invalid value of `pid` or invalid value of `new_priority`, i.e., `< 0 or > 100`. Else, after finding the process in the proc with its pid equal to `pid`, we set its `static_priority` to `new_priority`. Since we have to reschedule once the priority of a process chamges, we set the values of `nrunning` and `nsleeping` of that process whose priority has been changed to `0`.
+
+### <ins>Multi Level Feedback Queue (MLFQ) Scheduler</ins>:
+- A queue data structure has been created of type `struct Queue` in `kernel/proc.h` having fields `front` and `back` of type `struct proc *` and `no_of_processes` of type `int`, which represent the processes in the front and back of the queue and the number of processes in the queue respectively.
+- The queues are `NQUEUES(5)` in number defined in `kernel/proc.c` and are initialised using the `queue_init` function in `kernel/main.c` file implemented in `kernel/proc.c` by setting all of the fields of the Queue struct to `0`.
+- In the `proc` struct in `kernel/proc.h`, the following fields are added: `isQueued` of type `int` to keep track if a process is present in any queue or not, `Queue_Num` of type `int` to keep track of the queue in which the process is present, `int` array `slices_used[NQUEUES]` to keep track of the number of time slices the process spent in each of the `NQUEUE` number of queues, `ctime_queue` of type `int` to keep track of the time at which it has been inserted into the queue which it presently is in, `wtime_queue` of type `int` to keep track of the number of ticks for which it has been waiting in the queue which it presently is in and `queue_next` and `queue_prev` of type `struct proc *` to keep track of the processes which are after and before it in the present queue respectively.
+- The queue function prototypes of `add_to_queue` and `remove_from_queue` are defined in `kernel/proc.h` file and implemented in `kernel/queue.c` file. Accordingly, the object file dependency for the `kernel/queue.c` file has been added to the Makefile as `$K/queue.o`
+- Now, all the processes in the `proc` array of `kernel/proc.c` file are iterated and those processes which are not in any queue and are `RUNNABLE` are added to the queue according to their `Queue_Num` value using the `add_to_queue` function.
+- Then, we iterate over all the queues starting from the `0` queue till we find a non-empty queue and select the queue and then allot it CPU time.
+- With every clock interrupt, we call the `aging` function implemented in `kernel/proc.c` which puts the process in the queue with priority `p->Queue_Num - 1` (only for processes not in the `0`th queue). Also, we downgrade the present process if it has used up all of its time slice in the present queue by placing it in the queue with priority `p->Queue_Num + 1` (only for processes not in the `NQUEUE`th queue). After that, we iterate over all the queues with priority higher than that of the present process and if there are processes in them, we preempt the presently running process and reschedule again.
 
 <hr>

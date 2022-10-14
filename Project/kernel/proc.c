@@ -616,7 +616,7 @@ calc_niceness(struct proc* p){
   if(p->nrunning == 0 && p->nsleeping == 0){
     return 5; // initial case , niceness is 5
   }else{
-    return ((int) (((double) p->nsleeping)*10/(p->nsleeping+p->nrunning)));
+    return (p->nsleeping)*10/(p->nsleeping+p->nrunning);
   }
 }
 
