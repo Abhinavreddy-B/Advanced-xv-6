@@ -12,9 +12,10 @@
 - In the `kernel/syscall.c` file, we add the function prototype by adding the line `extern uint64 sys_function_name(void);`. We map the system call number of the function defined in `kernel/syscall.h` to the prototype of it defined previously. This is done in the `syscalls` array by adding the appropriate entry as `[syscall_number] sys_function_name`. We similarly add entries to the `syscall_names` array which keeps track of the names of the system calls and its entry is added as `[syscall_number] "function_name"` and finally another entry is added to the `syscalls_argcnt` array, which keeps track of the number of arguments of each system call. An entry for this array is created as `[syscall_number] number_of_arguments`, where `number_of_arguments` is a non-negative integer.
 - To make these system calls available to user-programs, we have to create entries of these system calls in `user/usys.pl` as `entry("function_name");` and in `user/user.h` as the actual prototype of the function including return type and argument type as `return_type function_name(argument types);`
 
-
 ## <ins>Adding a new user program</ins>:
 - After creating `filename.c` file, we include the object file dependency as `$U/_filename` in the `UPROGS` section of the Makefile.
+
+<hr>
 
 ## <ins>Specification 1: System calls</ins>
 
@@ -74,10 +75,26 @@
 - Then, we iterate over all the queues starting from the `0` queue till we find a non-empty queue and select the queue and then allot it CPU time.
 - With every clock interrupt, we call the `aging` function implemented in `kernel/proc.c` which puts the process in the queue with priority `p->Queue_Num - 1` (only for processes not in the `0`th queue). Also, we downgrade the present process if it has used up all of its time slice in the present queue by placing it in the queue with priority `p->Queue_Num + 1` (only for processes not in the `NQUEUE`th queue). After that, we iterate over all the queues with priority higher than that of the present process and if there are processes in them, we preempt the presently running process and reschedule again.
 
+<hr>
+
 ## <ins>Specification 3: Copy-on-write (COW) fork</ins>
 
 - In the `uvmcopy` function, we point the address space of the child to the same address space provided to the parent. Then, we update the permissions of the page table entries pointed to by the physical address by removing write permissions and adding an extra `PTE_COW` bit to help identify that the process is allocated address based on the principle of Copy-on-write fork. This bit is used later to identify if page-fault exceptions have occured due to COW. If yes, then these addresses are changed and different addresses are allocated to child and parent processes with write permissions.
 - After every clock tick the value of `r_scause` (supervisor trap cause) is checked if it is a page-fault exception. If yes, then we have values of either `13` or `15` of `r_scause` after which we call the `COW_handler` function.
 - In the `COW_handler` function, we first check if the page-fault exception is due to accessing of memory not allocated to write to, i.e., out of bounds memory access, in which case an error is returned and the process is killed using the `setkilled` function. Else, we obtain the address of the pagetable entry and the corresponding physical address allocated. We then update the permissions to access the address space of the parent by removing the `PTE_COW` bit and adding the `PTE_W` bit. Here, we essentially use the `PTE_COW` bit to identify page-fault exceptions that have appeared due to COW and resolve them by allocating physical address space to the child process and update the permissions of both the child and parent processes to be able to write to that address space. After this, the process executes normally.
+
+<hr>
+
+## <ins>Performance Comparision</ins>:
+- The comparision between the implemented scheduling algorithms, viz, `FCFS`, `LBS`, `PBS`, `MLFQ` and the default scheduling algorithm, `RR` was done using the `schedulertest.c` user program.
+- As given in the assignment document, `MLFQ` scheduling algorithm was run on `1` CPU while others (`LBS`, `PBS`, `FCFS` and `RR`) were run on `3` CPUS.
+
+| Policy  | Average run time  | Average wait time  |
+| :---:   | :-:               | :-:                |
+| RR      | 49                | 39                 |
+| FCFS    | 28                | 22                 |
+| LBS     | 62                | 49                 |
+| PBS     | 55                | 21                 |
+| MLFQ    | 54                | 186                |
 
 <hr>

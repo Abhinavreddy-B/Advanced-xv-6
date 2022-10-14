@@ -4,7 +4,7 @@
 #include "kernel/fcntl.h"
 
 
-#define NFORK 10
+#define NFORK 5
 #define IO 5
 
 int main() {
@@ -16,11 +16,11 @@ int main() {
       if (pid < 0)
           break;
       if (pid == 0) {
-          if (n < IO) {
-            sleep(200); // IO bound processes
-          } else {
-            for (int i = 0; i < 100000000000L; i++) {}; // CPU bound process
-          }
+          // if (n < IO) {
+          //   sleep(200); // IO bound processes
+          // } else {
+            for (uint64 i = 0; i < (uint64) 10000000000; i++) {}; // CPU bound process
+          // }
           // printf("Process %d finished", n);
           exit(0);
       } else {

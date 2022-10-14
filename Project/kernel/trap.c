@@ -134,7 +134,6 @@ usertrap(void)
         aging();
         p->slices_used[p->Queue_Num]++;
         if(p->slices_used[p->Queue_Num] % slices[p->Queue_Num] == 0 && p->Queue_Num < NQUEUES){ // 0 indexing
-          printf("Process number %d entered queue %d at time %d\n", p->pid, p->Queue_Num, p->ctime_queue);
           if(p->Queue_Num != NQUEUES-1){
             p->Queue_Num++;
             p->ctime_queue=ticks;
