@@ -728,10 +728,10 @@ scheduler(void)
     int total_tickets = 0;
     for (p = proc; p < &proc[NPROC]; p++)
     {
+      // lock everything so that there is no discrepency in total_tickets
+      acquire(&p->lock);
       if (p->state == RUNNABLE)
       {
-        acquire(&p->lock);
-        // printf("%s %p\n",p->name,p);
         total_tickets += p->tickets;
       }
     }
@@ -742,15 +742,18 @@ scheduler(void)
       int preftickets = 0;
       for(p = proc; p < &proc[NPROC]; p++){
         if(p->state == RUNNABLE){
-          if(preftickets+p->tickets < randominteger){
-            preftickets += p->tickets;
-            release(&p->lock);
-          }else if(selected == 0){ // first process which has higher cumulative tickets than random integer
+          if(preftickets < randominteger){
+            preftickets+= p->tickets;
+          }else{
             selected = p;
-          }else{ // these have higher cumulative frequence , but are not the first higher. so these are not selected
-            preftickets += p->tickets;
-            release(&p->lock);
+            break;
           }
+        }
+      }
+      for (p = proc; p < &proc[NPROC]; p++)
+      {
+        if(p != selected){
+          release(&p->lock);
         }
       }
 
@@ -764,6 +767,12 @@ scheduler(void)
         c->proc = 0;
 
         release(&selected->lock);
+      }
+    }else{
+      // if total_tickets == 0 , dont do anything , just release all processes.
+      for (p = proc; p < &proc[NPROC]; p++)
+      {
+        release(&p->lock);
       }
     }
 #endif
