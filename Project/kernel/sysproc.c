@@ -95,7 +95,7 @@ sys_trace(void)
 {
   struct proc *p = myproc();
   acquire(&p->lock);
-  argint(0, &(p->syscall_tracebits));
+  argint(0, &(p->syscall_tracebits)); // getting the system call number to be traced
   release(&p->lock);
   if (p->syscall_tracebits < 0)
     return -1;
@@ -106,14 +106,14 @@ uint64
 sys_sigalarm()
 {
   struct proc *p = myproc();
-  acquire(&p->lock);                //aquire the lock.
+  acquire(&p->lock);                // acquire the lock.
   argint(0,&(p->alarmdata.nticks)); // p->alarmdata.nticks = n 
   if(p->alarmdata.nticks < 0){      // error handling
     release(&p->lock);
     return -1;
   }
-  argaddr(1,&(p->alarmdata.handlerfn));   // p->alarmdata.handlerfn = fn
-  if(p->alarmdata.handlerfn < 0){   // error handling
+  argaddr(1,&(p->alarmdata.handlerfn)); // p->alarmdata.handlerfn = fn
+  if(p->alarmdata.handlerfn < 0){       // error handling
     release(&p->lock);
     return -1;
   }
@@ -125,7 +125,7 @@ uint64
 sys_sigreturn()
 {
   struct proc *p = myproc();
-  acquire(&p->lock);    // aquire lock
+  acquire(&p->lock);    // acquire lock
   memmove(p->trapframe,p->alarmdata.trapframe_cpy,PGSIZE); // restore original state
 
   kfree(p->alarmdata.trapframe_cpy);    // remove the copy
@@ -159,7 +159,7 @@ sys_settickets(void)
 {
 
 #ifndef LBS_SCHED
-  return -1;
+  return -1;  // illegal call to the function
 #endif
 
 #ifdef LBS_SCHED
@@ -191,7 +191,7 @@ sys_set_priority(void){
 #ifdef PBS_SCHED
   int new_priority;
   argint(0,&new_priority);
-  if(new_priority<0 || new_priority > 100){
+  if(new_priority < 0 || new_priority > 100){
     return -1;
   }
   int pid;
@@ -212,13 +212,16 @@ sys_set_priority(void){
     return -1;
   }
   acquire(&p->lock);
-  // int old_priority = p->static_priority;
+  int old_priority = p->static_priority;
   p->static_priority = new_priority;
   p->nrunning=0;
   p->nsleeping=0;
   release(&p->lock);
 
-#endif
+  if (old_priority < new_priority)
+    yield();
 
-  return 0;
+  return old_priority;
+
+#endif
 }
