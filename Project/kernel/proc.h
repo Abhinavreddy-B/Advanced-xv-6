@@ -82,9 +82,9 @@ struct trapframe {
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 struct sigalarm_struct {
-  int currticks;      // current number of ticks
-  int nticks;         // given input n
-  uint64 handlerfn;   // pointer to given function fn
+  int currticks;                    // current number of ticks
+  int nticks;                       // given input n
+  uint64 handlerfn;                 // pointer to given function fn
   struct trapframe *trapframe_cpy;  // copy of that trapframe when interrupt occurs ( also used to avoid recurrent calls to fn )
 };
 
@@ -132,15 +132,15 @@ struct proc {
 
 #ifdef PBS_SCHED
   int static_priority;
-  int ntimesscheduled;
-  int nsleeping;
-  int nrunning;
+  int ntimesscheduled;         // number of times the process has been scheduled
+  int nsleeping;               // number of ticks the process spent with state SLEEPING
+  int nrunning;                // number of ticks the process spent with state RUNNING
 #endif
 
 #ifdef MLFQ_SCHED
   int isQueued;
   int Queue_Num;
-  int slices_used[NQUEUES];
+  int slices_used[NQUEUES];    // array keeping track of the number of time slices the process has consumed in each queue
   int ctime_queue;
   int wtime_queue;
   struct proc* queue_next;

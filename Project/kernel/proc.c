@@ -349,7 +349,7 @@ fork(void)
   }
 
   // Copy user memory from parent to child.
-  if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){
+  if(uvmcopy(p->pagetable, np->pagetable, p->sz) < 0){  // modified uvmcopy to make the child's physical pages to point to those of the parent
     freeproc(np);
     release(&np->lock);
     return -1;
@@ -581,7 +581,7 @@ update_time()
 
 #ifdef LBS_SCHED
 
-/* This code was copy pasted from grind.c */
+/* This code was obtained from "user/grind.c" */
 int
 do_rand(unsigned long *ctx)
 {
@@ -709,7 +709,7 @@ scheduler(void)
       }
     }
     
-    if (next_process)
+    if (next_process) // if true, next_process points to the process which has the least creation time and is RUNNABLE
     {
       next_process->state = RUNNING;
       c->proc = next_process;

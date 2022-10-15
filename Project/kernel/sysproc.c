@@ -218,7 +218,7 @@ sys_set_priority(void){
   p->nsleeping=0;
   release(&p->lock);
 
-  if (old_priority < new_priority)
+  if (old_priority < new_priority)  // if the priority of the process increases, rescheduling happens
     yield();
 
   return old_priority;

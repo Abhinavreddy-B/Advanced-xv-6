@@ -57,9 +57,9 @@ int COW_handler(uint64 Virtual_addr,pagetable_t pagetable){
   flags = PTE_FLAGS(*pte);
   if (flags & PTE_COW)
   {
-    flags = (flags & ~PTE_COW) | PTE_W;
+    flags = (flags & ~PTE_COW) | PTE_W; // removing the COW identification bit and providing write permisisions to the physical pages
     char *mem;
-    mem = kalloc();
+    mem = kalloc(); // allocating separate memory for a new physical page for the child process
     if (mem == 0)
     {
       return 1;

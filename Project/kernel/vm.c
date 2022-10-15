@@ -325,9 +325,8 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
     //   kfree(mem);
     //   goto err;
     // }
-    flags = (flags | PTE_COW) & (~PTE_W);
-    *pte = PA2PTE(pa) | flags;  // update permissions of parent
-    //make child use the same page.
+    flags = (flags | PTE_COW) & (~PTE_W); // remove write permission from the physical pages allocated and show COW implementation
+    *pte = PA2PTE(pa) | flags;            // update permissions of parent to not be able to write and make child use the same page
 
     if(mappages(new, i, PGSIZE, (uint64)pa, flags) != 0){
       goto err;
