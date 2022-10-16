@@ -390,7 +390,7 @@ fork(void)
 #endif
 
 #ifdef PBS_SCHED
-  np->static_priority = p->static_priority; // set static priority of parent.
+  np->static_priority = p->static_priority; // set static priority of parent to child
   np->nrunning = 0;
   np->nsleeping = 0;
   np->ntimesscheduled = 0;
