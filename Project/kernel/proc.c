@@ -638,7 +638,7 @@ int min(int a,int b){
 void aging(){
   struct proc* p;
   for(p=proc;p<&proc[NPROC];p++){
-    if(p->state==RUNNABLE && p->isQueued && p->Queue_Num!=0 && ticks-p->ctime_queue >= AGE){
+    if(p->state == RUNNABLE && p->isQueued && p->Queue_Num != 0 && ticks - p->ctime_queue >= AGE){
       // acquire(&p->lock);
       remove_from_queue(p);
       p->Queue_Num--;
@@ -737,13 +737,13 @@ scheduler(void)
     }
     // printf("%d\n",total_tickets);
     if(total_tickets!= 0){
-      int randominteger = rand()%total_tickets;
+      int randominteger = rand() % total_tickets;
       struct proc* selected = 0;
       int preftickets = 0;
       for(p = proc; p < &proc[NPROC]; p++){
         if(p->state == RUNNABLE){
           if(preftickets < randominteger){
-            preftickets+= p->tickets;
+            preftickets += p->tickets;
           }else{
             selected = p;
             break;
@@ -824,7 +824,7 @@ scheduler(void)
 #endif
 
 #ifdef MLFQ_SCHED
-// preemption is done manually in mlfq, without the use of this macro.
+// preemption is done manually in mlfq, without the use of NON_PREEMPT macro.
 // note: mlfq is preemptive, this macro is used for automatic preemption.
 // we did manual premption here.
 
@@ -834,30 +834,25 @@ scheduler(void)
     }
   }
 
-  struct proc* selected = 0;
-  for (int i = 0; i < NQUEUES; i++) {
+  int flag = 0;
+  for (int i = 0; i < NQUEUES && !flag; i++) {
     // if(queues[i].no_of_processes != 0){
       // printf("%d *\n",queues[i].no_of_processes);
     // }
-    while (queues[i].no_of_processes != 0) {
+    while (queues[i].no_of_processes != 0 && !flag) {
       struct proc *p = queues[i].front;
       remove_from_queue(p);
-      selected = p;
-      break;
-    }
-    if (selected != 0) break;
-  }
-  if (selected != 0)
-  {
-    acquire(&selected->lock);
-    selected->state = RUNNING;
-    c->proc = selected;
-    swtch(&c->context, &selected->context);
+      acquire(&p->lock);
+      p->state = RUNNING;
+      c->proc = p;
+      swtch(&c->context, &p->context);
 
-    // Process is done running for now.
-    // It should have changed its p->state before coming back.
-    c->proc = 0;
-    release(&selected->lock);
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
+      release(&p->lock);
+      flag = 1;
+    }
   }
 
 #endif

@@ -34,44 +34,36 @@ trapinithart(void)
   w_stvec((uint64)kernelvec);
 }
 
-int COW_handler(uint64 Virtual_addr,pagetable_t pagetable){
+int COW_handler(uint64 Virtual_addr, pagetable_t pgtbl){
   struct proc* p= myproc();
   if (Virtual_addr >= MAXVA || (Virtual_addr >= PGROUNDDOWN(p->trapframe->sp) - PGSIZE && Virtual_addr <= PGROUNDDOWN(p->trapframe->sp)) || Virtual_addr == 0)
-  {
+  { // checking if Virtual_addr is a valid virtual address
     return 1;
   }
   pte_t *pte;
   uint64 pa;
   uint flags;
   Virtual_addr = (uint64)PGROUNDDOWN(Virtual_addr);
-  pte = walk(pagetable, Virtual_addr, 0);
-  if (pte == 0)
-  {
+  if ((pte = walk(pgtbl, Virtual_addr, 0)) == 0)
     return 1;
-  }
-  pa = PTE2PA(*pte);
-  if (pa == 0)
-  {
-    return 1;
-  }
   flags = PTE_FLAGS(*pte);
-  if (flags & PTE_COW)
+  if ((pa = PTE2PA(*pte)) == 0)
+    return 1;
+  
+  if (flags & PTE_COW)  // checking if page-fault exception is due to COW. Else, returning 1
   {
     flags = (flags & ~PTE_COW) | PTE_W; // removing the COW identification bit and providing write permisisions to the physical pages
     char *mem;
-    mem = kalloc(); // allocating separate memory for a new physical page for the child process
-    if (mem == 0)
-    {
+    if ((mem = kalloc()) == 0) // allocating separate memory for a new physical page for the child process
       return 1;
-    }
     memmove(mem, (void *)pa, PGSIZE);
     *pte = PA2PTE(mem) | flags;
-    uvmunmap(pagetable,Virtual_addr,1,0);
-    mappages(pagetable,Virtual_addr,1,(uint64) mem,flags);
+    uvmunmap(pgtbl,Virtual_addr,1,0);
+    mappages(pgtbl,Virtual_addr,1,(uint64) mem,flags);
     kfree((void *)pa);
-  }else{
-    return 1;
   }
+  else
+    return 1;
   return 0;
 }
 

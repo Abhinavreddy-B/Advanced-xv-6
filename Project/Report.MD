@@ -86,16 +86,16 @@
 <hr>
 
 ## <ins>Performance Comparision</ins>:
-- The comparision between the implemented scheduling algorithms, viz, `FCFS`, `LBS`, `PBS`, `MLFQ` and the default scheduling algorithm, `RR` was done using the `schedulertest.c` user program.
+- The comparision between the implemented scheduling algorithms, viz, `FCFS`, `LBS`, `PBS`, `MLFQ` and the default scheduling algorithm, `RR` was done using the `schedulertest.c` user program. All the schedulers were run
 - As given in the assignment document, `MLFQ` scheduling algorithm was run on `1` CPU while others (`LBS`, `PBS`, `FCFS` and `RR`) were run on `3` CPUS.
 
-| Policy  | Average run time  | Average wait time  |
-| :---:   | :-:               | :-:                |
-| RR      | 49                | 39                 |
-| FCFS    | 28                | 22                 |
-| LBS     | 62                | 49                 |
-| PBS     | 55                | 21                 |
-| MLFQ    | 54                | 186                |
+| Scheduler  | Average run time  | Average wait time  |
+| :----:     | :-:               | :-:                |
+| RR         | 49                | 39                 |
+| FCFS       | 28                | 22                 |
+| LBS        | 62                | 49                 |
+| PBS        | 55                | 21                 |
+| MLFQ       | 54                | 186                |
 
 <hr>
 
