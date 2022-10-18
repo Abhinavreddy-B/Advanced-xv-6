@@ -7,6 +7,12 @@
 
 <hr>
 
+## <ins>Running xv6</ins>:
+- Run `make qemu` on the terminal.
+- To set the scheduler, use the command, `make qemu SCHEDULER=SCHEDULER_NAME`, where scheduler name can be one of `RR`, `FCFS`, `LBS`, `PBS` or `MLFQ`.
+- To set the number of CPUs to be used, use the command, `make qemu CPUS=NUMCPUS`, where `NUMCPUS >= 1`. Hence, `MLFQ` scheduler can be run as `make qemu SCHEDULER=MLFQ CPUS=1`.
+- Our implementation runs `make clean` everytime we exit the program for easier changing of scheduler schemes without having to run `make clean` whenever desired. This can be avoided by removing line `196`, `make clean` of the `Makefile`.
+
 ## <ins>Adding a new system call</ins>:
 - The system call number of the new system call is set according to the availability, with the maximum being 32 in the `kernel/syscall.h` file. The naming of the system call must be sys_`function_name` and must be followed throughout this process.
 - In the `kernel/syscall.c` file, the function prototype is added by adding the line `extern uint64 sys_function_name(void);`. The system call number of the function defined in `kernel/syscall.h` is mapped to the prototype of it defined previously. This is done in the `syscalls` array by adding the appropriate entry as `[syscall_number] sys_function_name`. Similarly entries are added to the `syscall_names` array which keeps track of the names of the system calls which can be done as `[syscall_number] "function_name"` and finally another entry is added to the `syscalls_argcnt` array, which keeps track of the number of arguments of each system call. An entry for this array is created as `[syscall_number] number_of_arguments`, where `number_of_arguments` is a non-negative integer.
