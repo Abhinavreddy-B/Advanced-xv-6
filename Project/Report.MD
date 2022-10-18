@@ -98,3 +98,5 @@
 | MLFQ    | 54                | 186                |
 
 <hr>
+
+<img src="./MLFQ Performance Analysis.png">
