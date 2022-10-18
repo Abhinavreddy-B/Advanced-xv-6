@@ -153,13 +153,8 @@ UPROGS=\
 	$U/_zombie\
 	$U/_strace\
 	$U/_sigalarmtest\
-	$U/_schedtest\
-	$U/_schedtest2\
-	$U/_schedtest3\
 	$U/_setpriority\
-	$U/_temp\
 	$U/_schedulertest\
-	$U/_cowtests\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
