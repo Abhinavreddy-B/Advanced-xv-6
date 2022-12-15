@@ -21,6 +21,6 @@ Example:
 $ make qemu SCHEDULER=PBS CPUS=2
 ```
 
-# Credits:
-* Me - [Github](https://github.com/Abhinavreddy-B)
-* Gnana Prakash Punnavajhala - [Github](https://github.com/GnanaPrakashSG2004)
+# Contributors
+* [Abhinav Reddy Boddu](https://github.com/Abhinavreddy-B)
+* [Gnana Prakash Punnavajhala](https://github.com/GnanaPrakashSG2004)
